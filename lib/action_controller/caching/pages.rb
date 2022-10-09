@@ -64,6 +64,7 @@ module ActionController
 
       class PageCache #:nodoc:
         def initialize(cache_directory, default_extension, controller = nil)
+          Rails.logger.info('--- PageCache#initialize')
           @cache_directory = cache_directory
           @default_extension = default_extension
           @controller = controller
@@ -76,6 +77,7 @@ module ActionController
         end
 
         def cache(content, path, extension = nil, gzip = Zlib::BEST_COMPRESSION)
+          Rails.logger.info("--- PageCache#cache - #{path}")
           instrument :write_page, path do
             write(content, cache_path(path, extension), gzip)
           end
@@ -171,10 +173,14 @@ module ActionController
           end
 
           def write(content, path, gzip)
+            Rails.logger.info("--- PageCache#write")
+            Rails.logger.info(path)
+            Rails.logger.info(content)
             return unless path
 
             FileUtils.makedirs(File.dirname(path))
-            File.open(path, "wb+") { |f| f.write(content) }
+            result = File.open(path, "wb+") { |f| f.write(content) }
+            Rails.logger.info("--- File writter: #{result}")
 
             if gzip
               Zlib::GzipWriter.open(path + ".gz", gzip) { |f| f.write(content) }
@@ -200,6 +206,7 @@ module ActionController
         #
         #   cache_page "I'm the cached content", "/lists/show"
         def cache_page(content, path, extension = nil, gzip = Zlib::BEST_COMPRESSION)
+          Rails.logger.info("--- Pages.cache_page - #{path}")
           if perform_caching
             page_cache.cache(content, path, extension, gzip)
           end
@@ -220,6 +227,7 @@ module ActionController
         #   # don't gzip images
         #   caches_page :image, gzip: false
         def caches_page(*actions)
+          Rails.logger.info("--- Pages.caches_page - #{actions}")
           if perform_caching
             options = actions.extract_options!
 
